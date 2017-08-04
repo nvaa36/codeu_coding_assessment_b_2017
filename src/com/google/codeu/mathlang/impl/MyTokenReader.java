@@ -15,8 +15,15 @@
 package com.google.codeu.mathlang.impl;
 
 import java.io.IOException;
+import java.lang.StringBuilder;
+import java.lang.Character;
+import java.lang.Double;
 
 import com.google.codeu.mathlang.core.tokens.Token;
+import com.google.codeu.mathlang.core.tokens.NameToken;
+import com.google.codeu.mathlang.core.tokens.NumberToken;
+import com.google.codeu.mathlang.core.tokens.StringToken;
+import com.google.codeu.mathlang.core.tokens.SymbolToken;
 import com.google.codeu.mathlang.parsing.TokenReader;
 
 // MY TOKEN READER
@@ -27,9 +34,14 @@ import com.google.codeu.mathlang.parsing.TokenReader;
 // work with the test of the system.
 public final class MyTokenReader implements TokenReader {
 
+  private String source;
+  private int index;
+
   public MyTokenReader(String source) {
     // Your token reader will only be given a string for input. The string will
     // contain the whole source (0 or more lines).
+   this.source = source;
+   index = 0;
   }
 
   @Override
@@ -41,6 +53,68 @@ public final class MyTokenReader implements TokenReader {
     // If for any reason you detect an error in the input, you may throw an IOException
     // which will stop all execution.
 
-    return null;
+    if (index >= source.length())
+      return null;
+
+    // Scan the next input value
+    char character = source.charAt(index);
+    index++;
+    //System.out.println("**" + character + "**");
+
+    // If there is whitespace, read until it is gone
+    while (character == ' ' || character == '\n') {
+      character = source.charAt(index);
+      index++;
+    }
+
+    // If the character is a symbol, return the SymbolToken
+    if (character == '=' || character == '+' || character == '-' || character == ';')
+      return new SymbolToken(character);
+
+    // If the character is a number, return the NumberToken of it
+    if (Character.isDigit(character))
+      return new NumberToken(Double.parseDouble("" + character));
+
+    // If the beginning of the string is a ", then we want to read
+    // until the next "
+    if (character == '"') {
+
+      StringBuilder stringbuilder = new StringBuilder();
+      char next = source.charAt(index);
+      index++;
+
+      // Keep reading in until we find a "
+      while (next != '"') {
+        stringbuilder.append(next);
+        next = source.charAt(index);
+        index++;
+      }
+
+      // Return the token
+      StringToken token = new StringToken(stringbuilder.toString());
+      //System.out.println(token);
+      return token;
+    }
+
+    // build the word liek normal if not "
+    StringBuilder stringbuilder = new StringBuilder();
+    stringbuilder.append(character);
+    char next = source.charAt(index);
+    index++;
+
+    // Keep reading in until we find a ' ' or symbol
+    while (!(next == ' ' || next == ';' || next == '=' || next == '+' || next == '-')) {
+      stringbuilder.append(next);
+      next = source.charAt(index);
+      index++;
+    }
+
+    // If we read in a symbol we want to decrement to re-read it
+    if (next != ' ')
+      index--;
+
+    NameToken token = new NameToken(stringbuilder.toString());
+    //System.out.println(token);
+    return token;
   }
 }
